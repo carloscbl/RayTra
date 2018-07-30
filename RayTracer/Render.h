@@ -31,7 +31,7 @@ public:
 	}
 
 	//dot
-	auto operator%(vec3 r) const {
+	auto dot(vec3 r) const  {
 		return x * r.x + y * r.y + z * r.z;
 	}
 	static auto dot(vec3 lhs,vec3 rhs)  {
@@ -86,25 +86,25 @@ public:
 	vec3<double> Intersection(Ray r, bool* hits) override {
 		// math
 
-		float a = r.dir % r.dir;
+		double a = r.dir.dot( r.dir);
 		vec3<double> sphereToRay = r.origin - pos;
-		float b = 2 * (r.dir % sphereToRay);
-		float c = (sphereToRay % sphereToRay) - pow(rad, 2);
+		double b = 2 * (r.dir.dot(sphereToRay));
+		double c = (sphereToRay.dot(sphereToRay)) - pow(rad, 2);
 
 
-		float dis = pow(b, 2) - 4 * a * c;
+		double dis = pow(b, 2) - 4 * a * c;
 
 		if (dis < 0) {
 			*hits = false;
 			return vec3<double>(0, 0, 0);
 		}
 
-		float root = sqrt(dis);
+		double root = sqrt(dis);
 
-		float oneRoot = (((-1 * b) + root)) / (2 * a);
-		float otherRoot = (((-1 * b) - root)) / (2 * a);
+		double oneRoot = (((-1 * b) + root)) / (2 * a);
+		double otherRoot = (((-1 * b) - root)) / (2 * a);
 
-		float t = -1;
+		double t = -1;
 		if (oneRoot >= 0 && otherRoot >= 0) {
 			t = otherRoot;
 		}
@@ -136,11 +136,23 @@ public:
 	plane_black_white_dimensions square_dimension;
 	vec3<double> pos;
 
-	const int getColor(const vec3<double> & pos) const noexcept {
-		if (true)
+	int getColor(const vec3<double>& pos) const{
+		double two_centimeter = 0.02;
+		bool white = false;
+		if ( std::fmod(pos.x, two_centimeter) == 0.0 && std::fmod(pos.y, two_centimeter) == 0.0)
 		{
-
+			white = true;
 		}
+		bool x, y;
+		x = pos.x > 0 ? true : false;
+		y = pos.y > 0 ? true : false;
+
+		bool result = !x ^ !y;
+		if (result)
+		{
+			white = !white;
+		}
+		return white;
 	}
 
 	plane(vec3<double> && pos) : pos(pos) {};
@@ -207,6 +219,11 @@ public:
 	void traze() {
 		for (const auto & px : screen_matrix) {
 			Ray(world_px_pos(px),vec3<double>(0,0,-1),1);
+			plane.getColor()// snell law para refraction
+			if (true)
+			{
+
+			}
 		}
 		//This shoot the rays for every pix
 
