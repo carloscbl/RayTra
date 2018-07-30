@@ -83,7 +83,7 @@ public:
 	double rad = 0;
 	vec3<double> pos;
 	const double refraction = 1.33;
-	vec3<double> Intersection(Ray r, bool* hits) {
+	vec3<double> Intersection(Ray r, bool* hits) override {
 		// math
 
 		float a = r.dir % r.dir;
