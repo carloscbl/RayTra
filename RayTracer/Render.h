@@ -75,7 +75,7 @@ public:
 	shape();
 	virtual ~shape();
 
-	virtual vec3<double> Intersection(Ray r, bool* hits) = 0;
+	virtual vec3<double> Intersection(Ray r, bool& hits) = 0;
 };
 
 class sphere : public shape{
@@ -83,7 +83,7 @@ public:
 	double rad = 0;
 	vec3<double> pos;
 	const double refraction = 1.33;
-	vec3<double> Intersection(Ray r, bool* hits) override {
+	vec3<double> Intersection(Ray r, bool& hits) override {
 		// math
 
 		double a = r.dir.dot( r.dir);
@@ -95,7 +95,7 @@ public:
 		double dis = pow(b, 2) - 4 * a * c;
 
 		if (dis < 0) {
-			*hits = false;
+			hits = false;
 			return vec3<double>(0, 0, 0);
 		}
 
@@ -112,11 +112,11 @@ public:
 			t = oneRoot;
 		}
 		else {
-			*hits = false;
+			hits = false;
 			return vec3<double>(0, 0, 0);
 		}
 
-		*hits = true;
+		hits = true;
 		vec3<double> pt = r.origin;
 		vec3<double> trans = r.dir;
 		trans = trans * t ;
@@ -126,7 +126,7 @@ public:
 	sphere(double rad, vec3<double> && pos) :rad(rad), pos(pos) {};
 
 };
-class plane {
+class plane : public shape{
 public:
 	struct plane_black_white_dimensions
 	{
@@ -135,7 +135,19 @@ public:
 	};
 	plane_black_white_dimensions square_dimension;
 	vec3<double> pos;
-
+	vec3<double> dir;
+	vec3<double> Intersection(Ray r, bool& hits) override {
+		double d = this->dir.dot(r.dir);
+		if ( std::fabs(d) > 0.0001)
+		{
+			double t = (this->pos - r.origin).dot(this->dir) / d;
+			if (t >= 0)
+			{
+				hits = true;
+			}
+		}
+		hits = false;
+	}
 	int getColor(const vec3<double>& pos) const{
 		double two_centimeter = 0.02;
 		bool white = false;
@@ -155,7 +167,7 @@ public:
 		return white;
 	}
 
-	plane(vec3<double> && pos) : pos(pos) {};
+	plane(vec3<double> && pos, vec3<double> && dir) : pos(pos),dir(dir) {};
 
 };
 class Camera
@@ -179,7 +191,8 @@ public:
 		static constexpr int height = 1000;
 		static constexpr int width = 1000;
 	};
-	
+
+	const int max_bounces = 24;
 	sphere sphere;
 	plane plane;
 	Camera camera;
@@ -190,7 +203,7 @@ public:
 
 	Render(): 
 		sphere(0.02, std::move(vec3<double>(0, 0, 0.04))),
-		plane( std::move(vec3<double>(0,0,0)) ),
+		plane( std::move(vec3<double>(0,0,0)), std::move(vec3<double>(0, 0, 1)) ),
 		camera(std::move(vec3<double>(0, 0, 0.25)) , std::move(vec3<double>(0, 0, -1))),
 		screen_matrix(PX_bounds::height * PX_bounds::width)
 	{};
@@ -219,6 +232,10 @@ public:
 	void traze() {
 		for (const auto & px : screen_matrix) {
 			Ray(world_px_pos(px),vec3<double>(0,0,-1),1);
+			for (size_t i = 0; i < ; i++)
+			{
+
+			}
 			plane.getColor()// snell law para refraction
 			if (true)
 			{
