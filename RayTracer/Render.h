@@ -145,6 +145,8 @@ public:
 			{
 				hits = true;
 			}
+			vec3<double> hitPoint = r.origin + r.dir * t;
+			return hitPoint;
 		}
 		hits = false;
 	}
