@@ -1,6 +1,8 @@
 #pragma once
 #include <utility>
 #include <vector>
+#include <algorithm>
+#include <memory>
 
 template<typename T>
 class vec3
@@ -16,22 +18,22 @@ public:
 		return vec3(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z);
 	}
 
-	const vec3 operator-(const vec3 r) const {
+	auto operator-(const vec3 r) const {
 		return vec3(x - r.x, y - r.y, z - r.z);
 	}
 	static auto substract(vec3 lhs, vec3 rhs) {
 		return vec3(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z);
 	}
 
-	auto operator*(float r) const {
+	auto operator*(T r) const {
 		return vec3(x*r, y*r, z*r);
 	}
-	static auto mult(vec3 v, float r)  {
+	static auto mult(vec3 v, T r)  {
 		return vec3(v.x*r, v.y*r, v.z*r);
 	}
 
 	//dot
-	auto dot(vec3 r) const  {
+	const T dot(vec3 r) const  {
 		return x * r.x + y * r.y + z * r.z;
 	}
 	static auto dot(vec3 lhs,vec3 rhs)  {
@@ -52,14 +54,12 @@ class Ray
 public:
 	vec3<double> origin;
 	vec3<double> dir;
-	double lenght;
 
-	Ray(vec3<double> && startPosition, vec3<double> && dir, double lenght) : 
+	Ray(vec3<double> && startPosition, vec3<double> && dir) : 
 		origin(startPosition),
-		dir(dir),
-		lenght(lenght)
+		dir(dir)
 	{};
-	~Ray();
+	~Ray() {};
 
 	//0 -> black, 1 -> white | Similar to turned off, turned on
 	//const int get_black_white_color() {
@@ -72,8 +72,8 @@ class shape
 {
 public:
 	const double refraction = 1;
-	shape();
-	virtual ~shape();
+
+	virtual ~shape() {};
 
 	virtual vec3<double> Intersection(Ray r, bool& hits) = 0;
 };
@@ -149,11 +149,14 @@ public:
 			return hitPoint;
 		}
 		hits = false;
+		return vec3<double>(0,0,0);
 	}
 	int getColor(const vec3<double>& pos) const{
 		double two_centimeter = 0.02;
 		bool white = false;
-		if ( std::fmod(pos.x, two_centimeter) == 0.0 && std::fmod(pos.y, two_centimeter) == 0.0)
+		double a = std::fmod(pos.x, two_centimeter);
+		double b = std::fmod(pos.y, two_centimeter);
+		if ( a == 0.0 && b == 0.0)
 		{
 			white = true;
 		}
@@ -194,18 +197,19 @@ public:
 		static constexpr int width = 1000;
 	};
 
-	const int max_bounces = 24;
-	sphere sphere;
-	plane plane;
+	const int max_ray_bounces = 4;
+	std::vector<std::shared_ptr<shape>> shapes;
 	Camera camera;
-	double pix_size = 1 / PX_bounds::height;
+	double pix_size = 1.0 / PX_bounds::height;
 	std::vector<int> screen_matrix;
 	std::vector<int> screen_buffer;
 	int half_px = (PX_bounds::height * PX_bounds::width) / 2;
 
 	Render(): 
-		sphere(0.02, std::move(vec3<double>(0, 0, 0.04))),
-		plane( std::move(vec3<double>(0,0,0)), std::move(vec3<double>(0, 0, 1)) ),
+		shapes(std::vector<std::shared_ptr<shape>>{
+			std::make_shared<sphere>(0.02, std::move(vec3<double>(0, 0, 0.04))),
+			std::make_shared<plane>( std::move(vec3<double>(0,0,0)), std::move(vec3<double>(0, 0, 1)) ),
+		}),
 		camera(std::move(vec3<double>(0, 0, 0.25)) , std::move(vec3<double>(0, 0, -1))),
 		screen_matrix(PX_bounds::height * PX_bounds::width)
 	{};
@@ -213,41 +217,67 @@ public:
 	{
 		x,y,z
 	};
-	int normalize_px(int px, Dimension d) {
+	double normalize_px(int px, Dimension d) {
 		if (d == Dimension::x)
 		{
+			
 			int col_normalized = px % PX_bounds::width;
 			int offset_center = col_normalized - (PX_bounds::width / 2) ;
 			return offset_center / 1000;
 		}
 		else
 		{
-			int r = ((px + half_px) - (half_px * 2)) / (half_px * 2);
+			double r = ((px + half_px) - (half_px * 2.0)) / (half_px * 2.0);
+			return r;
 		}
 	}
 	vec3<double>world_px_pos(int px) {
+		if (px > 500)
+		{
+			int i = 356;
+		}
 		return vec3<double>(
 			camera.pos.x + normalize_px(px,Dimension::x) * pix_size,
 			camera.pos.y + normalize_px(px, Dimension::y) * pix_size,
 			camera.pos.z);
 	}
 	void traze() {
-		for (const auto & px : screen_matrix) {
-			Ray(world_px_pos(px),vec3<double>(0,0,-1),1);
-			for (size_t i = 0; i < ; i++)
+		for (int px = 0; px < screen_matrix.size(); ++px) {
+			auto initial_ray = Ray(world_px_pos(px),vec3<double>(0,0,-1));
+			for (auto & element : shapes)
 			{
-
-			}
-			plane.getColor()// snell law para refraction
-			if (true)
-			{
-
+				Ray bounce = initial_ray;
+				for (size_t i = 0; i < max_ray_bounces; i++)
+				{
+					bool hit = false;
+					auto hitPoint = element->Intersection(bounce, hit);
+					if (hit && element->refraction > 1.1)
+					{
+						//bounce
+						bounce = Ray( std::move(hitPoint), std::move(refract(hitPoint,bounce.dir,element->refraction)));
+					}
+					else if (hit) {
+						//without bounce
+						screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint);
+						break;
+					}
+					else {
+						//no hit
+						break;
+					}
+				}
 			}
 		}
-		//This shoot the rays for every pix
-
+		//This shoot the rays for every 
 	};
-	void process_matrix();
-	~Render();
+	vec3<double> refract(vec3<double> origin, vec3<double> dir, double refraction_idx)
+	{
+		refraction_idx = 2.0f - refraction_idx;
+		double cosi = dir.dot(origin);
+		vec3<double> newDirection = (origin * refraction_idx - dir * (-cosi + refraction_idx * cosi));
+		return newDirection;
+	}
+
+	~Render() {};
 };
 
