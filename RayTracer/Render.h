@@ -152,24 +152,33 @@ public:
 		return vec3<double>(0,0,0);
 	}
 	int getColor(const vec3<double>& pos) const{
-		double two_centimeter = 0.02;
+		int two_centimeter = 0.02 * 100;
+		if (pos.x > 0.2)
+		{
+			int a = 7;
+		}
 		bool white = false;
-		double a = std::fmod(pos.x, two_centimeter);
-		double b = std::fmod(pos.y, two_centimeter);
-		if ( a == 0.0 && b == 0.0)
+		int a = (int)((pos.x+ 0.5) *100) % two_centimeter;
+		int b = (int)((pos.y+ 0.5) *100) % two_centimeter;
+		if ( a == 0 )
 		{
 			white = true;
 		}
-		bool x, y;
-		x = pos.x > 0 ? true : false;
-		y = pos.y > 0 ? true : false;
-
-		bool result = !x ^ !y;
-		if (result)
+		else {
+			white = false;
+		}
+		if (b == 0 )
 		{
 			white = !white;
 		}
-		return white;
+
+		if (white)
+		{
+			return 255;
+		}
+		else {
+			return 0;
+		}
 	}
 
 	plane(vec3<double> && pos, vec3<double> && dir) : pos(pos),dir(dir) {};
@@ -201,8 +210,8 @@ public:
 	std::vector<std::shared_ptr<shape>> shapes;
 	Camera camera;
 	double pix_size = 1.0 / PX_bounds::height;
+	double pix_camera = pix_size / (camera.pos.z );
 	std::vector<int> screen_matrix;
-	std::vector<int> screen_buffer;
 	int half_px = (PX_bounds::height * PX_bounds::width) / 2;
 
 	Render(): 
