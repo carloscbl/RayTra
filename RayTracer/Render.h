@@ -217,13 +217,17 @@ public:
 	{
 		x,y,z
 	};
-	double normalize_px(int px, Dimension d) {
+	double screenPX_to_world_space(int px, Dimension d) {
 		if (d == Dimension::x)
 		{
-			
+			if (px > 1)
+			{
+				int i = 356;
+			}
 			int col_normalized = px % PX_bounds::width;
 			int offset_center = col_normalized - (PX_bounds::width / 2) ;
-			return offset_center / 1000;
+			auto result = offset_center * pix_size;
+			return result;
 		}
 		else
 		{
@@ -237,8 +241,8 @@ public:
 			int i = 356;
 		}
 		return vec3<double>(
-			camera.pos.x + normalize_px(px,Dimension::x) * pix_size,
-			camera.pos.y + normalize_px(px, Dimension::y) * pix_size,
+			camera.pos.x + screenPX_to_world_space(px,Dimension::x),
+			camera.pos.y + screenPX_to_world_space(px, Dimension::y),
 			camera.pos.z);
 	}
 	void traze() {
