@@ -71,7 +71,7 @@ public:
 class shape
 {
 public:
-	const double refraction = 1;
+	double refraction = 1;
 
 	virtual ~shape() {};
 
@@ -82,7 +82,6 @@ class sphere : public shape{
 public:
 	double rad = 0;
 	vec3<double> pos;
-	const double refraction = 1.33;
 	vec3<double> Intersection(Ray r, bool& hits) override {
 		// math
 
@@ -123,7 +122,7 @@ public:
 		pt = pt + trans;
 		return pt;
 	}
-	sphere(double rad, vec3<double> && pos) :rad(rad), pos(pos) {};
+	sphere(double rad, vec3<double> && pos) :rad(rad), pos(pos) { refraction = 1.33; };
 
 };
 class plane : public shape{
@@ -258,8 +257,10 @@ public:
 	void traze() {
 		for (int px = 0; px < screen_matrix.size(); ++px) {
 			auto initial_ray = Ray(world_px_pos(px),vec3<double>(0,0,-1));
+			uint8_t add = 0;
 			for (auto & element : shapes)
 			{
+				bool got_color_yet = false;
 				Ray bounce = initial_ray;
 				for (size_t i = 0; i < max_ray_bounces; i++)
 				{
@@ -269,16 +270,30 @@ public:
 					{
 						//bounce
 						bounce = Ray( std::move(hitPoint), std::move(refract(hitPoint,bounce.dir,element->refraction)));
+						add = 128;
 					}
 					else if (hit) {
 						//without 
-						screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint, (hitPoint.z-camera.pos.z)/2 );
+						if (add != 0)
+						{
+							screen_matrix[px] = add;// std::static_pointer_cast<plane>(element)->getColor(hitPoint, 0.01/*(hitPoint.z-camera.pos.z)/2*/);
+
+						}
+						else {
+							screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint, (hitPoint.z-camera.pos.z)/2);
+
+						}
+						got_color_yet = true;
 						break;
 					}
 					else {
 						//no hit
 						break;
 					}
+				}
+				if (got_color_yet)
+				{
+					break;
 				}
 			}
 		}
