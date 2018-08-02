@@ -211,7 +211,7 @@ public:
 	Camera camera;
 	double pix_size = 1.0 / PX_bounds::height;
 	double pix_camera = pix_size / (camera.pos.z );
-	std::vector<int> screen_matrix;
+	std::vector<uint8_t> screen_matrix;
 	int half_px = (PX_bounds::height * PX_bounds::width) / 2;
 
 	Render(): 
@@ -271,7 +271,7 @@ public:
 					}
 					else if (hit) {
 						//without bounce
-						screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint);
+						screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint *(camera.pos.z/2));
 						break;
 					}
 					else {
