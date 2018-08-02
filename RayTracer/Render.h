@@ -151,23 +151,24 @@ public:
 		hits = false;
 		return vec3<double>(0,0,0);
 	}
-	int getColor(const vec3<double>& pos) const{
-		int two_centimeter = 0.02 * 100;
-		if (pos.x > 0.2)
-		{
-			int a = 7;
-		}
+	int getColor(const vec3<double>& pos, double scale) const{
+
+		//(bool)Floor(pos.x / scala) % 2;
+		
+		int a = (int)std::floor(pos.x / scale) % 2;
+		int b = (int)std::floor(pos.y / scale) % 2;
+		
 		bool white = false;
-		int a = (int)((pos.x+ 0.5) *100) % two_centimeter;
-		int b = (int)((pos.y+ 0.5) *100) % two_centimeter;
-		if ( a == 0 )
+
+
+		if ( a )
 		{
 			white = true;
 		}
 		else {
 			white = false;
 		}
-		if (b == 0 )
+		if (b)
 		{
 			white = !white;
 		}
@@ -270,8 +271,8 @@ public:
 						bounce = Ray( std::move(hitPoint), std::move(refract(hitPoint,bounce.dir,element->refraction)));
 					}
 					else if (hit) {
-						//without bounce
-						screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint *(camera.pos.z/2));
+						//without 
+						screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint,0.01 / 0.125);
 						break;
 					}
 					else {
