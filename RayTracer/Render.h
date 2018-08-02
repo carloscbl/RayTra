@@ -272,7 +272,7 @@ public:
 					}
 					else if (hit) {
 						//without 
-						screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint,0.01 / 0.125);
+						screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint, (hitPoint.z-camera.pos.z)/2 );
 						break;
 					}
 					else {
