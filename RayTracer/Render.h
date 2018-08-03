@@ -258,46 +258,29 @@ public:
 		for (int px = 0; px < screen_matrix.size(); ++px) {
 			auto initial_ray = Ray(world_px_pos(px),vec3<double>(0,0,-1));
 			uint8_t add = 0;
-			vec3<double> early_hit(0,0,0);
-			bool early_hitB = false;
 			for (auto & element : shapes)
 			{
 				bool got_color_yet = false;
-				
 				Ray bounce = initial_ray;
 				for (size_t i = 0; i < max_ray_bounces; i++)
 				{
 					bool hit = false;
 					auto hitPoint = element->Intersection(bounce, hit);
-					if (i == 0 && element->refraction > 1.1 && hit)
-					{
-						early_hit = hitPoint;
-						early_hitB = true;
-					}
 					if (hit && element->refraction > 1.1)
 					{
 						//bounce
 						Ray r = Ray(std::move(hitPoint), std::move(refract(hitPoint, bounce.dir, element->refraction)));
 						bounce = r;
-						//add = 128;
+						add = 128;
 					}
 					else if (hit) {
 						//without 
 						if (add != 0)
 						{
-							screen_matrix[px] = add;// std::static_pointer_cast<plane>(element)->getColor(hitPoint, 0.01/*(hitPoint.z-camera.pos.z)/2*/);
-							//screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint, (early_hit.z-camera.pos.z)/2);
-
+							screen_matrix[px] = add;
 						}
 						else {
-							if (early_hitB)
-							{
-								screen_matrix[px] = 128;// std::static_pointer_cast<plane>(element)->getColor(hitPoint, (early_hit.z - camera.pos.z) / 2);
-							}
-							else {
-								screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint, (hitPoint.z - camera.pos.z) / 2);
-							}
-
+							screen_matrix[px] = std::static_pointer_cast<plane>(element)->getColor(hitPoint, (hitPoint.z - camera.pos.z) / 2);
 						}
 						got_color_yet = true;
 						break;
